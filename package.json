@@ -1,0 +1,19 @@
+{
+  "name": "esformatter-diff",
+  "description": "Compute the difference between your code and the formatted version with esformatter",
+  "version": "0.1.0",
+  "author": {
+    "name": "Fabio Crisci"
+  },
+  "dependencies": {
+    "esformatter": "x",
+    "cli": "~0.4.5",
+    "diff": "~1.0.5",
+    "glob": "~3.2.6"
+  },
+  "bin": {
+    "esformatter-diff": "./bin/diff"
+  },
+  "main": "./lib/main",
+  "license": "MIT"
+}

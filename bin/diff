@@ -1,0 +1,96 @@
+#!/usr/bin/env node
+"use strict";
+
+var cli = require("cli");
+var main = require("../lib/main");
+var path = require("path");
+var fs = require('fs');
+
+
+var ARGV = {
+	'diff': [undefined, 'Display lines that differ from original', 'boolean', false],
+	'default': [undefined, 'Use default esformatter configuration', 'boolean', false]
+};
+
+cli.setApp(path.join(__dirname, '/../package.json'));
+cli.enable('help', 'version');
+cli.setUsage(cli.app + ' [OPTIONS] <config file name>');
+
+var options = cli.parse(ARGV);
+var config;
+
+if (options.default) {
+	config = {};
+} else if (!cli.args.length) {
+	cli.getUsage();
+    process.exit();
+} else {
+	config = loadConfigFile(cli.args.shift());
+}
+main(process.cwd(), config, onStart, onProgress, onEnd);
+
+function loadConfigFile (file) {
+    if (!file) {
+        return;
+    }
+    if (!fs.existsSync(file)) {
+        cli.error("Can't find configuration file: " + file + "\nFile doesn't exist");
+        process.exit(1);
+    } else {
+        try {
+            return JSON.parse(fs.readFileSync(file).toString());
+        } catch (ex) {
+            cli.error("Can't parse configuration file: " + file + "\nException: " + ex.message);
+            process.exit(1);
+        }
+    }
+}
+
+var totalFiles = 0;
+var processedAlready = 0;
+function onStart (stats) {
+	totalFiles = stats.files;
+	cli.ok("Analizyng " + totalFiles + " files with esformatter@" + require("../node_modules/esformatter/package.json").version);
+	if (!options.diff) {
+		cli.progress(0);
+	}
+}
+
+function onProgress (err, file, stats) {
+	processedAlready += 1;
+	if (err) {
+		cli.error("Error progressing " + file + "\nMessage:" + err.message);
+	} else if (!options.diff) {
+		cli.progress(processedAlready / totalFiles);
+	} else if (stats.changes > 0) {
+		console.log("Index: " + file);
+		console.log("===================================================================");
+		console.log("--- Original");
+		console.log("+++ Formatted");
+		console.log("");
+		stats.diff.forEach(function (block) {
+			console.log("---");
+			console.log(block.original);
+			console.log("+++");
+			console.log(block.formatted);
+			console.log("");
+		});
+		console.log("===================================================================");
+	}
+}
+
+function onEnd (err, stats) {
+	if (err) {
+		cli.error(err.message);
+		process.exit(1);
+	} else if (!options.diff) {
+		cli.progress(100);
+	}
+	console.log("Processed", totalFiles, "files for a total of", stats.lines, "lines of code,", stats.changes, "differ from the original code");
+	var percentage = (100.0 * (1 - stats.changes / stats.lines));
+	if (percentage === 100) {
+		cli.ok("100 %");
+	} else {
+		cli.error(Math.ceil(percentage) + " %");
+	}
+}

@@ -15,5 +15,13 @@
     "esformatter-diff": "./bin/diff"
   },
   "main": "./lib/main",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/piuccio/esformatter-diff.git"
+  },
+  "bugs": {
+    "url": "https://github.com/piuccio/esformatter-diff/issues"
+  },
+  "homepage": "https://github.com/piuccio/esformatter-diff",
   "license": "MIT"
 }
